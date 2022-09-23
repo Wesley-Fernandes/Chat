@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="author" content="Wesley Fernandes"/>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        *{
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        body{
+            display: flex;
+            flex-wrap: wrap;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            background-color: #272727;
+        }
+        .hud{
+            display: flex;
+            flex-wrap: wrap;
+            height: 600px;
+            width: 400px;
+            outline: 2px solid black;
+            border-radius: 20px;
+            box-shadow: 0 0 10px 5px black;
+        }
+        header{
+            display: flex;
+            align-items: center;
+            background-color: black;
+            width: 100%;
+            height: 12%;
+            color: white;
+            text-indent: 0.5rem;
+            border-radius: 18px 18px 0 0;
+        }
+        header .my--name{
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            text-transform: capitalize;
+            color: cornflowerblue;
+            font-size: 2rem;
+            width: 300px;
+            margin: 1rem;
+            border: none;
+            background-color: black;
+        }
+        header .user--avatar{
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            outline: 4px solid green;
+        }
+        .chat{
+            transition: 0.4s;
+            height: 76%;
+            width: 100%;
+            overflow-y: scroll;
+            background: linear-gradient(#272727, white);
+        }
+        footer{
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            height: 12%;
+            border-radius: 0 0 18px 18px;
+            background-color: black;
+        }
+        footer form{
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: black;
+            border-radius: 0 0 18px 18px;
+        }
+        footer input{
+            width: 80%;
+            padding: 0.2rem 0.5rem;
+            margin: 0.2rem;
+        }
+        footer button{
+            padding: 0.2rem 0.5rem;
+            font-weight: bold;
+        }
+        footer button:hover{
+            cursor: pointer;
+            background-color: cornflowerblue;
+        }
+
+
+        ul{
+            transition: 0.4s;
+        }
+        ul li{
+            text-decoration: none;
+            list-style: none;
+            transition: 0.4s;
+        }
+        .msg{
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 88%;
+            padding: 0.4rem;
+            border-radius: 10px;
+            margin: 1rem 0.7rem;
+            border-radius: 10px;
+            outline: 2px solid black;
+        }
+        .msg--me{
+            margin-left: 12%;
+            background-color: rgb(79, 79, 220);
+        }
+        .msg--others{
+            margin-right: 12%;
+            background-color: gray;
+
+        }
+        .msg .msg--user{
+            text-align: center;
+            width: 100%;
+            font-size: 1.2rem;
+            position: relative;
+            top: -18px;
+            font-weight: bolder;
+            color: white;
+            text-shadow: 1px 2px 1px black;
+        }
+        .msg .msg--text{
+            box-sizing: border-box;
+            background-color: white;
+            word-break: break-all;
+            padding: 0.4rem;
+            width: 100%;
+            border-radius: 10px;
+            
+        }
+        .msg .msg--hour{
+            width: 100%;
+            text-align: end;
+            color: white;
+            font-size: 1.2rem;
+            margin-top: 10px;
+            text-shadow: 1px 2px 1px black;
+        }
+        #msgs{
+            transition: 0.4s;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="hud">
+        <header>
+            <input type="text" id="name" autocomplete="off" class="my--name" placeholder="Meu nome..."/>
+            <img class="user--avatar" src="https://img.freepik.com/vetores-premium/homem-perfil-caricatura_18591-58483.jpg">
+        </header>
+        <div class="chat">
+            <ul id="msgs">
+                
+            </ul>
+        </div>
+        <footer>
+            <form id="form">
+                <input type="text" autocomplete="off" id="input">
+                <button id="button">Enviar</button>
+            </form>
+        </footer>
+    </div>
+    <script
+        src="https://cdn.socket.io/4.5.0/socket.io.min.js"
+        integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k" crossorigin="anonymous">
+    </script>
+    <script>
+        const socket = io();
+        const input = document.getElementById('input');
+        const name = document.getElementById('name');
+        const msgs = document.getElementById('msgs');
+        const form = document.getElementById('form');
+
+        async function getHours(){
+            const data = new Date();
+            const horas = await data.getHours();
+            let minutes = await data.getMinutes();
+
+            if(minutes<10){
+                minutes = "0".concat(minutes)
+            }
+            return `${horas}:${minutes}`;
+        }
+
+        form.addEventListener('submit', async (e)=>{
+            e.preventDefault()
+
+            if(name.value!=""){
+
+                if(input.value!=""){
+                    const thatHour = await getHours();
+                    socket.emit("chat message", {nome: name.value, mensagem: input.value, horas: thatHour});
+                    input.value="";
+
+                }else{
+
+                    alert("A mensagem não pode ser enviada em branco.");
+
+                }
+            }else{
+
+                alert("Você precisa escolher um nome.");
+
+            }
+        });
+
+        socket.on("chat message", (msg)=>{
+            const {nome, mensagem, horas} = msg;
+
+            if(nome===name.value){
+                MakeMsgBox("msg--me", "Eu");
+            }else{
+                MakeMsgBox("msg--others", nome);
+            }
+
+
+            async function MakeMsgBox(who, whoName){
+                const item = document.createElement('li');
+                const username = document.createElement("span");
+                const text = document.createElement("text");
+                const hourNow = document.createElement("span");
+
+                
+                item.classList.add("msg");
+                item.classList.add(who);
+                username.classList.add("msg--user");
+                text.classList.add("msg--text");
+                hourNow.classList.add("msg--hour");
+
+
+                const username_text = document.createTextNode(whoName);
+                const text_msg = document.createTextNode(mensagem);
+                const hour_text = document.createTextNode(horas);
+                text.appendChild(text_msg);
+                username.appendChild(username_text);
+                hourNow.appendChild(hour_text);
+
+
+                item.appendChild(username);
+                item.appendChild(text);
+                item.appendChild(hourNow);
+                msgs.appendChild(item);
+
+
+                const last = msgs.lastChild;
+                last.scrollIntoView();
+            }
+       
+
+        })
+    </script>
+</body>
+</html>
